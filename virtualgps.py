@@ -19,7 +19,7 @@
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
-DEBUG = True
+DEBUG = False
 
 import os, sys, time, datetime, configparser
 

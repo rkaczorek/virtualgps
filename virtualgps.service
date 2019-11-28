@@ -1,12 +1,12 @@
 # File to be placed under /etc/systemd/system/
 [Unit]
 Description=Virtual GPS
-After=multi-user.target gpsd.socket
+After=multi-user.target gpsd.socket gpsd.service
 
 [Service]
 Type=idle
 User=gps
-ExecStart=/usr/bin/python3 /opt/virtualgps/virtualgps.py
+ExecStart=/usr/bin/python3 /usr/bin/virtualgps.py
 Restart=always
 RestartSec=5
 
