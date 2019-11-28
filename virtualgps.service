@@ -5,7 +5,7 @@ After=multi-user.target gpsd.socket gpsd.service
 
 [Service]
 Type=idle
-User=gps
+User=gpsd
 ExecStart=/usr/bin/python3 /usr/bin/virtualgps.py
 Restart=always
 RestartSec=5
