@@ -19,9 +19,7 @@
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
-DEBUG = False
-
-import os, sys, time, datetime, configparser
+import os, sys, signal, time, datetime, configparser
 
 __author__ = 'Radek Kaczorek'
 __copyright__ = 'Copyright 2019  Radek Kaczorek'
@@ -29,9 +27,7 @@ __license__ = 'GPL-3'
 __version__ = '1.0.0'
 
 config_file = "/etc/location.conf"
-default_latitude  = 52.13791
-default_longitude = 21.00704
-default_elevation = 100.0
+virtualgps_dev = "/tmp/virtualgps"
 
 def nmea_checksum(sentence):
     chsum = 0
@@ -39,18 +35,31 @@ def nmea_checksum(sentence):
         chsum ^= ord(s)
     return hex(chsum)[2:]
 
-def shut_down():
-	print('Keyboard interrupt received\nTerminated by user\nGood Bye.\n')
+def shutdown():
 	os.close(master)
 	os.close(slave)
+	os.remove(virtualgps_dev)
+	os.system("gpsdctl remove /tmp/virtualgps")
 	sys.exit()
+
+def term_handler(signum, frame):
+	raise KeyboardInterrupt
+
+# register term handler
+signal.signal(signal.SIGTERM, term_handler)
 
 if __name__ == '__main__':
 	# create pseudo terminal device
 	master, slave = os.openpty()
 	pty = os.ttyname(slave)
-	if DEBUG:
-		print(pty)
+
+	# create symlink to pseudo terminal device
+	if os.path.islink(virtualgps_dev) or os.path.isfile(virtualgps_dev):
+		os.remove(virtualgps_dev)
+	os.symlink(pty,virtualgps_dev)
+
+	# add virtual gps to gpsd
+	os.system("gpsdctl add /tmp/virtualgps")
 
 	# load location data from config
 	if os.path.isfile(config_file):
@@ -61,19 +70,27 @@ if __name__ == '__main__':
 			longitude = float(config['default']['longitude'])
 			elevation = float(config['default']['elevation'])
 		else:
-			# if config wrong load defaults
-			latitude  = default_latitude
-			longitude = default_longitude
-			elevation = default_elevation
+			# if config wrong exit
+			raise KeyboardInterrupt
 	else:
-		# if config does not exist load defaults
-		latitude  = default_latitude
-		longitude = default_longitude
-		elevation = default_elevation
+		# if config does not exist exit
+		raise KeyboardInterrupt
 
 	# format for NMEA
 	latitude = latitude * 100
 	longitude = longitude * 100
+
+	# W or E
+	if latitude > 0:
+		NS = 'N'
+	else:
+		NS = 'S'
+
+	# N or S
+	if longitude > 0:
+		WE = 'E'
+	else:
+		WE = 'W'
 
 	while True:
 		try:
@@ -82,23 +99,18 @@ if __name__ == '__main__':
 			time_now = now.strftime("%H%M%S")
 
 			# assemble nmea sentences
-			# NMEA minimal sequence
+			# NMEA minimal sequence:
 			#$GPGGA,231531.521,5213.788,N,02100.712,E,1,12,1.0,0.0,M,0.0,M,,*6A
 			#$GPGSA,A,1,,,,,,,,,,,,,1.0,1.0,1.0*30
 			#$GPRMC,231531.521,A,5213.788,N,02100.712,E,,,261119,000.0,W*72
-			gpgga = "GPGGA,%s,%s,N,%s,E,1,12,1.0,%s,M,0.0,M,," % (time_now, latitude, longitude, elevation)
+			gpgga = "GPGGA,%s,%s,%s,%s,%s,1,12,1.0,%s,M,0.0,M,," % (time_now, latitude, NS, longitude, WE, elevation)
 			gpgsa = "GPGSA,A,3,,,,,,,,,,,,,1.0,1.0,1.0"
-			gprmc = "GPRMC,%s,A,%s,N,%s,E,,,%s,000.0,W" % (time_now, latitude, longitude, date_now)
+			gprmc = "GPRMC,%s,A,%s,%s,%s,%s,,,%s,000.0,W" % (time_now, latitude, NS, longitude, WE, date_now)
 
 			# add nmea checksums
 			gpgga = "$%s*%s\n" % (gpgga, nmea_checksum(gpgga))
 			gpgsa = "$%s*%s\n" % (gpgsa, nmea_checksum(gpgsa))
 			gprmc = "$%s*%s\n" % (gprmc, nmea_checksum(gprmc))
-
-			if DEBUG:
-				print(gpgga, end='')
-				print(gpgsa, end='')
-				print(gprmc, end='')
 
 			os.write(master, gpgga.encode())
 			os.write(master, gpgsa.encode())
@@ -106,4 +118,4 @@ if __name__ == '__main__':
 
 			time.sleep(1)
 		except KeyboardInterrupt:
-			shut_down()
+			shutdown()
