@@ -1,4 +1,0 @@
-#!/bin/bash
-# postrm script for virtualgps
-
-systemctl enable gpsd.socket

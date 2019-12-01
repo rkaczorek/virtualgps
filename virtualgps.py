@@ -27,7 +27,7 @@ __license__ = 'GPL-3'
 __version__ = '1.0.0'
 
 config_file = "/etc/location.conf"
-virtualgps_dev = "/tmp/virtualgps"
+virtualgps_dev = "/tmp/vgps"
 
 def nmea_checksum(sentence):
     chsum = 0
@@ -36,10 +36,9 @@ def nmea_checksum(sentence):
     return hex(chsum)[2:]
 
 def shutdown():
+	os.remove(virtualgps_dev)
 	os.close(master)
 	os.close(slave)
-	os.remove(virtualgps_dev)
-	os.system("gpsdctl remove /tmp/virtualgps")
 	sys.exit()
 
 def term_handler(signum, frame):
@@ -52,14 +51,7 @@ if __name__ == '__main__':
 	# create pseudo terminal device
 	master, slave = os.openpty()
 	pty = os.ttyname(slave)
-
-	# create symlink to pseudo terminal device
-	if os.path.islink(virtualgps_dev) or os.path.isfile(virtualgps_dev):
-		os.remove(virtualgps_dev)
 	os.symlink(pty,virtualgps_dev)
-
-	# add virtual gps to gpsd
-	os.system("gpsdctl add /tmp/virtualgps")
 
 	# load location data from config
 	if os.path.isfile(config_file):
@@ -102,11 +94,12 @@ if __name__ == '__main__':
 			date_now = now.strftime("%d%m%y")
 			time_now = now.strftime("%H%M%S")
 
-			# assemble nmea sentences
 			# NMEA minimal sequence:
 			#$GPGGA,231531.521,5213.788,N,02100.712,E,1,12,1.0,0.0,M,0.0,M,,*6A
 			#$GPGSA,A,1,,,,,,,,,,,,,1.0,1.0,1.0*30
 			#$GPRMC,231531.521,A,5213.788,N,02100.712,E,,,261119,000.0,W*72
+
+			# assemble nmea sentences
 			gpgga = "GPGGA,%s,%s,%s,%s,%s,1,12,1.0,%s,M,0.0,M,," % (time_now, latitude, NS, longitude, WE, elevation)
 			gpgsa = "GPGSA,A,3,,,,,,,,,,,,,1.0,1.0,1.0"
 			gprmc = "GPRMC,%s,A,%s,%s,%s,%s,,,%s,000.0,W" % (time_now, latitude, NS, longitude, WE, date_now)
