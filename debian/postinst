@@ -1,0 +1,7 @@
+#!/bin/bash
+# postinst script for virtualgps
+
+systemctl disable gpsd.service
+systemctl disable gpsd.socket
+systemctl enable virtualgps.service && systemctl start virtualgps.service
+
