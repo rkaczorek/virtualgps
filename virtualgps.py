@@ -76,10 +76,6 @@ if __name__ == '__main__':
 		# if config does not exist exit
 		raise KeyboardInterrupt
 
-	# format for NMEA
-	latitude = latitude * 100
-	longitude = longitude * 100
-
 	# W or E
 	if latitude > 0:
 		NS = 'N'
@@ -91,6 +87,14 @@ if __name__ == '__main__':
 		WE = 'E'
 	else:
 		WE = 'W'
+
+	# format for NMEA
+	lat_deg = int(latitude)
+	lon_deg = int(longitude)
+	lat_min = (latitude - lat_deg) * 60
+	lon_min = (longitude - lon_deg) * 60
+	latitude = "%d%07.4f" % (lat_deg, lat_min)
+	longitude = "%d%07.4f" % (lon_deg, lon_min)
 
 	while True:
 		try:
