@@ -81,13 +81,14 @@ if __name__ == '__main__':
 		WE = 'W'
 
 	# format for NMEA
+	latitude = abs(latitude)
+	longitude = abs(longitude)
 	lat_deg = int(latitude)
 	lon_deg = int(longitude)
 	lat_min = (latitude - lat_deg) * 60
 	lon_min = (longitude - lon_deg) * 60
-	latitude = "%d%07.4f" % (lat_deg, lat_min)
-	longitude = "%d%07.4f" % (lon_deg, lon_min)
-
+	latitude = "%02d%07.4f" % (lat_deg, lat_min)
+	longitude = "%03d%07.4f" % (lon_deg, lon_min)
 	while True:
 		try:
 			now = datetime.datetime.utcnow()
