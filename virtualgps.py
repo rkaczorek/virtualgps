@@ -51,7 +51,9 @@ if __name__ == '__main__':
 	# create pseudo terminal device
 	master, slave = os.openpty()
 	pty = os.ttyname(slave)
-	os.symlink(pty,virtualgps_dev)
+	if os.path.isfile(virtualgps_dev):
+		os.remove(virtualgps_dev)
+		os.symlink(pty,virtualgps_dev)
 
 	# load location data from config
 	if os.path.isfile(config_file):
