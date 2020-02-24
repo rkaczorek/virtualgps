@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: Virtual GPS
 Upstream-Contact: Radek Kaczorek <rkaczorek@gmail.com>
-Source: https://github.com/rkaczorek/virualgps
+Source: https://github.com/rkaczorek/virtualgps
 
 Files: *
 Copyright: 2019, Radek Kaczorek <rkaczorek@gmail.com>
