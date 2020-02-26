@@ -36,7 +36,10 @@ def nmea_checksum(sentence):
     return hex(chsum)[2:]
 
 def shutdown():
-	os.remove(virtualgps_dev)
+	try:
+		os.remove(virtualgps_dev)
+	except:
+		pass
 	os.close(master)
 	os.close(slave)
 	sys.exit()
@@ -51,9 +54,12 @@ if __name__ == '__main__':
 	# create pseudo terminal device
 	master, slave = os.openpty()
 	pty = os.ttyname(slave)
+
+	# remove leftovers before setting virtual dev
 	if os.path.isfile(virtualgps_dev):
 		os.remove(virtualgps_dev)
-		os.symlink(pty,virtualgps_dev)
+
+	os.symlink(pty,virtualgps_dev)
 
 	# load location data from config
 	if os.path.isfile(config_file):
