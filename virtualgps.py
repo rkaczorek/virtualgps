@@ -26,7 +26,7 @@ __copyright__ = 'Copyright 2019  Radek Kaczorek'
 __license__ = 'GPL-3'
 __version__ = '1.0.0'
 
-config_file = "/etc/location.conf"
+config_file = "/etc/location.conf.d/location.conf"
 virtualgps_dev = "/tmp/vgps"
 
 def nmea_checksum(sentence):
