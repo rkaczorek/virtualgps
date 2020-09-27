@@ -1,4 +1,5 @@
 #!/bin/bash
+
 LOCATION_DIR="/etc/location.conf.d"
 LOCATION_FILE="${LOCATION_DIR}/location.conf"
 ALL_LOCATIONS="${LOCATION_DIR}/*.conf"
@@ -76,7 +77,7 @@ function existing {
 	fi
 }
 
-zenity --question --width=300 --text="Use an existing location? No to create a new one."
+zenity --question --width=300 --text="Use an existing location?\nChoose No to create a new one."
 
 if [ "$?" = "1" ]
 then
