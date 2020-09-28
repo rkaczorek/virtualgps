@@ -10,7 +10,7 @@ function create {
 		LAT="$(grep latitude $LOCATION_FILE | cut -d\= -f2 | xargs)"
 		LON="$(grep longitude $LOCATION_FILE | cut -d\= -f2 | xargs)"
 		ELEV="$(grep elevation $LOCATION_FILE | cut -d\= -f2 | xargs)"
-		NAM="$(grep name $LOCATION_FILE | cut -d\= -f2 | xargs)"
+		NAM="$(grep name $LOCATION_FILE | cut -d\= -f2 | xargs -0)"
 	fi
 
 	DATA=$(zenity --forms --title="Geographic location" \
@@ -36,7 +36,7 @@ longitude = $LON
 elevation = $ELEV
 name = $NAM
 EOF
-		FILENAM="${NAM// /_}.conf"
+		FILENAM="${NAM//[\w\'\*\+<>\\\/]/_}.conf"
 		cat > $LOCATION_DIR/$FILENAM << EOF
 [default]
 latitude  = $LAT
