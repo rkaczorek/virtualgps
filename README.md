@@ -29,7 +29,7 @@ You can edit /etc/location.conf.d/location.conf file or use Preferences/Geograph
 
 # What's the deal of using Virtual GPS?
 If you don't have GPS device but you use applications that require one, you can simulate GPS device with Virtual GPS.
-While started it reads location from /etc/location.conf file and feeds it to gpsd daemon. Any application that
+While started it reads location from /etc/location.conf.d/location.conf file and feeds it to gpsd daemon. Any application that
 can get location form gpsd will use your location from configuration file.
 
 # Issues
