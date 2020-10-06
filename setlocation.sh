@@ -85,3 +85,6 @@ then
 else
 	existing
 fi
+
+#set new location
+systemctl restart virtualgps
