@@ -19,15 +19,46 @@
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
-import os, sys, signal, time, datetime, configparser
+import os, sys, signal, time, datetime, configparser, re
 
 __author__ = 'Radek Kaczorek'
 __copyright__ = 'Copyright 2019  Radek Kaczorek'
 __license__ = 'GPL-3'
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 
 config_file = "/etc/location.conf"
 virtualgps_dev = "/tmp/vgps"
+
+
+def convert_to_sexagesimal(coord):
+	"""
+	Convert a string of coordinates using delimiters for minutes ('),
+	seconds (") and degrees (º). It also supports colon (:).
+
+		>>> from virtualgps import convert_to_sexagesimal
+		>>> convert_to_sexagesimal(u"52:08.25:1.5\"")
+		52.13791666666667
+		>>> convert_to_sexagesimal(u"52:08:16.5\"")
+		52.13791666666667
+		>>> convert_to_sexagesimal(u"52.1:02:16.5\"")
+		52.13791666666667
+		>>> convert_to_sexagesimal(u"52º08'16.5\"")
+		52.13791666666667
+
+	:param coord: Coordinates in string representation
+	:return: Coordinates in float representation
+	"""
+	elements = re.split(r'[\u00ba\':\"]', coord)
+
+	degrees = float(elements[0])
+	if len(elements) > 0:
+		# Convert minutes to degrees
+		degrees += float(elements[1]) / 60
+	if len(elements) > 1:
+		# Convert seconds to degrees
+		degrees += float(elements[2]) / 3600
+	return degrees
+
 
 def nmea_checksum(sentence):
     chsum = 0
@@ -66,8 +97,8 @@ if __name__ == '__main__':
 		config = configparser.ConfigParser()
 		config.read(config_file)
 		if 'latitude' in config['default'] and 'longitude' in config['default'] and 'elevation' in config['default']:
-			latitude = float(config['default']['latitude'])
-			longitude = float(config['default']['longitude'])
+			latitude = convert_to_sexagesimal(config['default']['latitude'])
+			longitude = convert_to_sexagesimal(config['default']['longitude'])
 			elevation = float(config['default']['elevation'])
 		else:
 			# if config wrong exit
