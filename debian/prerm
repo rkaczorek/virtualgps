@@ -1,5 +1,0 @@
-#!/bin/bash
-# prerm script for virtualgps
-
-systemctl stop virtualgps.service
-systemctl disable virtualgps.service

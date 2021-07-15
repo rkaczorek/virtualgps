@@ -1,8 +1,8 @@
-virtualgps (1.0.1) buster; urgency=medium
+virtualgps (1.0.1-1) buster; urgency=medium
 
-  * Fixes #55
+  * Fixes #55 from astroberry server
 
- -- Radek Kaczorek <rkaczorek@gmail.com>  Mon, 24 Feb 2020 14:13:01 +0100
+ -- Radek Kaczorek <rkaczorek@gmail.com>  Wed, 26 Feb 2020 21:51:22 +0100
 
 virtualgps (1.0.0) buster; urgency=medium
 

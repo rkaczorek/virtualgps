@@ -1,6 +1,0 @@
-#!/bin/bash
-# postinst script for virtualgps
-
-systemctl enable virtualgps.service
-systemctl start virtualgps.service
-
