@@ -51,10 +51,10 @@ def convert_to_sexagesimal(coord):
 	elements = re.split(r'[\u00ba\':\"]', coord)
 
 	degrees = float(elements[0])
-	if len(elements) > 0:
+	if (len(elements) - 1) > 0:
 		# Convert minutes to degrees
 		degrees += float(elements[1]) / 60
-	if len(elements) > 1:
+	if (len(elements) - 1) > 1:
 		# Convert seconds to degrees
 		degrees += float(elements[2]) / 3600
 	return degrees
