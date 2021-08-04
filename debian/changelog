@@ -1,3 +1,9 @@
+virtualgps (1.1.1) buster; urgency=medium
+
+  * Bug fixes
+
+ -- Radek Kaczorek <rkaczorek@gmail.com>  Wed, 04 Aug 2021 17:05:48 +0200
+
 virtualgps (1.1.0) buster; urgency=medium
 
   * Allow sexagesimal degree coordinates using different delimiters.
