@@ -24,7 +24,7 @@ import os, sys, signal, time, datetime, configparser, re
 __author__ = 'Radek Kaczorek'
 __copyright__ = 'Copyright 2019  Radek Kaczorek'
 __license__ = 'GPL-3'
-__version__ = '1.1.0'
+__version__ = '1.1.1'
 
 config_file = "/etc/location.conf"
 virtualgps_dev = "/tmp/vgps"
