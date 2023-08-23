@@ -9,5 +9,6 @@ Homepage: http://www.astroberry.io/
 Package: virtualgps
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, gpsd
+Recommends: apparmor-utils
 Description: Virtual GPS simulates GPS receiver
  available on pseudo terminal
