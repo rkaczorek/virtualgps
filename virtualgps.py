@@ -29,6 +29,9 @@ __version__ = '1.2.0'
 # default config file
 config_file = "/etc/virtualgps.conf"
 
+# default profile name
+profile_name = "default"
+
 # default location
 latitude, longitude, elevation = "0", "0", "0"
 
@@ -84,24 +87,28 @@ signal.signal(signal.SIGTERM, term_handler)
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Emulates GPS serial device based on virtual location\n')
-	parser.add_argument('--config', type=str, help='Optional configuration file (default=/etc/virtualgps.conf)')
-	parser.add_argument('--nmea', type=str, help='Optional NMEA log file to restream')
-	parser.add_argument('--lat', type=str, help='Optional virtual Latitude')
-	parser.add_argument('--lon', type=str, help='Optional virtual Longitude')
-	parser.add_argument('--el', type=str, help='Optional virtual Elevation')
+	parser.add_argument('--config', type=str, help='Configuration file (default=/etc/virtualgps.conf)')
+	parser.add_argument('--profile', type=str, help='Configuration profile name (default=default)')
+	parser.add_argument('--nmea', type=str, help='NMEA log file to restream')
+	parser.add_argument('--lat', type=str, help='Virtual Latitude')
+	parser.add_argument('--lon', type=str, help='Virtual Longitude')
+	parser.add_argument('--el', type=str, help='Virtual Elevation')
 	args = parser.parse_args()
 
 	if args.config:
 		config_file = args.config
 
+	if args.profile:
+		profile_name = args.profile
+
 	# use location data from config
 	if os.path.isfile(config_file):
 		config = configparser.ConfigParser()
 		config.read(config_file)
-		if 'latitude' in config['default'] and 'longitude' in config['default'] and 'elevation' in config['default']:
-			latitude = convert_to_sexagesimal(config['default']['latitude'])
-			longitude = convert_to_sexagesimal(config['default']['longitude'])
-			elevation = float(config['default']['elevation'])
+		if 'latitude' in config[profile_name] and 'longitude' in config[profile_name] and 'elevation' in config[profile_name]:
+			latitude = convert_to_sexagesimal(config[profile_name]['latitude'])
+			longitude = convert_to_sexagesimal(config[profile_name]['longitude'])
+			elevation = float(config[profile_name]['elevation'])
 		else:
 			# if config wrong exit
 			raise KeyboardInterrupt
