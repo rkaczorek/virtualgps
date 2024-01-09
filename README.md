@@ -25,11 +25,11 @@ Debian package with Virtual GPS is available from [www.astroberry.io](https://ww
 Virtual GPS device is linked to /tmp/virtualgps file (only when virtualgps.py is running)
 
 # How to configure virtual location?
-You can edit /etc/location.conf file or use Preferences/Geographic Location menu
+You can edit /etc/virtualgps.conf file or use Preferences/Geographic Location menu
 
 # What's the deal of using Virtual GPS?
 If you don't have GPS device but you use applications that require one, you can simulate GPS device with Virtual GPS.
-While started it reads location from /etc/location.conf file and feeds it to gpsd daemon. Any application that
+While started it reads location from /etc/virtualgps.conf file and feeds it to gpsd daemon. Any application that
 can get location form gpsd will use your location from configuration file.
 
 # Issues
