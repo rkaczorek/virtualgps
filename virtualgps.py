@@ -112,9 +112,6 @@ if __name__ == '__main__':
 		else:
 			# if config wrong exit
 			raise KeyboardInterrupt
-	else:
-		# if config does not exist exit
-		raise KeyboardInterrupt
 
 	# use command line arguments only
 	if args.lat:
