@@ -90,9 +90,9 @@ if __name__ == '__main__':
 	parser.add_argument('--config', type=str, help='Configuration file (default=/etc/virtualgps.conf)')
 	parser.add_argument('--profile', type=str, help='Configuration profile name (default=default)')
 	parser.add_argument('--nmea', type=str, help='NMEA log file to restream')
-	parser.add_argument('--lat', type=str, help='Virtual Latitude')
-	parser.add_argument('--lon', type=str, help='Virtual Longitude')
-	parser.add_argument('--el', type=str, help='Virtual Elevation')
+	parser.add_argument('--lat', type=str, help='Virtual Latitude (default=0)')
+	parser.add_argument('--lon', type=str, help='Virtual Longitude (default=0)')
+	parser.add_argument('--el', type=str, help='Virtual Elevation (default=0)')
 	args = parser.parse_args()
 
 	if args.config:
@@ -112,6 +112,10 @@ if __name__ == '__main__':
 		else:
 			# if config wrong exit
 			raise KeyboardInterrupt
+	else:
+		latitude = 0
+		longitude = 0
+		elevation = 0
 
 	# use command line arguments only
 	if args.lat:
