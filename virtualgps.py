@@ -24,7 +24,7 @@ import os, sys, re, signal, time, datetime, argparse, configparser
 __author__ = 'Radek Kaczorek'
 __copyright__ = 'Copyright 2019 - 2023 Radek Kaczorek'
 __license__ = 'GPL-3'
-__version__ = '1.2.0'
+__version__ = '1.2.1'
 
 # default config file
 config_file = "/etc/virtualgps.conf"
@@ -87,9 +87,11 @@ signal.signal(signal.SIGTERM, term_handler)
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Emulates GPS serial device based on virtual location\n')
-	parser.add_argument('--config', type=str, help='Configuration file (default=/etc/virtualgps.conf)')
-	parser.add_argument('--profile', type=str, help='Configuration profile name (default=default)')
-	parser.add_argument('--nmea', type=str, help='NMEA log file to restream')
+	parser.add_argument('-c', '--config', type=str, help='Configuration file (default=/etc/virtualgps.conf)')
+	parser.add_argument('-p', '--profile', type=str, help='Configuration profile name (default=default)')
+	parser.add_argument('-n', '--nmea', type=str, help='NMEA log file to restream')
+	parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output (default=false)')
+	parser.add_argument('--version', action='version', version=__version__, help='Output version and exit')
 	parser.add_argument('--lat', type=str, help='Virtual Latitude (default=0)')
 	parser.add_argument('--lon', type=str, help='Virtual Longitude (default=0)')
 	parser.add_argument('--el', type=str, help='Virtual Elevation (default=0)')
@@ -137,19 +139,26 @@ if __name__ == '__main__':
 	# on some systems apparmor allows for gpsfake only /tmp/gpsfake-*.sock
 	# we need to handle this by adding pty device to apparmor configuration
 	apparmor = "/etc/apparmor.d/usr.sbin.gpsd"
-	os.system("sudo aa-complain %s" % apparmor)
+	if os.path.isfile(apparmor):
+		if args.verbose:
+			os.system("aa-complain %s" % apparmor)
+		else:
+			os.system("aa-complain %s > /dev/null" % apparmor)
 
 	# add device to gpsd
 	try:
-		os.system("sudo gpsdctl add %s" % pty)
+		os.system("gpsdctl add %s" % pty)
 	except:
-		print("Error adding %s device to gpsd server", pty)
+		if args.verbose:
+			print("Error adding %s device to gpsd server", pty)
 		sys.exit()
 
 	if args.nmea:
-		print("Restreaming NMEA log file %s to serial GPS device %s" % (args.nmea, pty))
+		if args.verbose:
+			print("Restreaming NMEA log file %s to serial GPS device %s" % (args.nmea, pty))
 	else:
-		print("Streaming virtual location (Lat: %s, Lon: %s, El: %s) to serial GPS device %s" % (latitude, longitude, elevation, pty))
+		if args.verbose:
+			print("Streaming virtual location (Lat: %s, Lon: %s, El: %s) to serial GPS device %s" % (latitude, longitude, elevation, pty))
 
 	# format for NMEA
 	# N or S

@@ -5,7 +5,7 @@ After=multi-user.target gpsd.socket
 
 [Service]
 Type=idle
-User=gpsd
+User=root
 ExecStart=/usr/bin/python3 /usr/bin/virtualgps.py
 ExecStartPost=sleep 3
 ExecStartPost=+/usr/sbin/gpsdctl add /tmp/vgps
