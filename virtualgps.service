@@ -1,4 +1,3 @@
-# File to be placed under /etc/systemd/system/
 [Unit]
 Description=Virtual GPS
 After=multi-user.target gpsd.socket
@@ -6,10 +5,7 @@ After=multi-user.target gpsd.socket
 [Service]
 Type=idle
 User=root
-ExecStart=/usr/bin/python3 /usr/bin/local/virtualgps.py
-ExecStartPost=sleep 3
-ExecStartPost=+/usr/sbin/gpsdctl add /tmp/vgps
-ExecStopPost=+/usr/sbin/gpsdctl remove /tmp/vgps
+ExecStart=virtual-gps -v
 Restart=always
 RestartSec=10
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
-# Virtual GPS simulates GPS receiver available on pseudo terminal
+# Virtual GPS simulates GPS receiver on pseudo terminal
 #
-# Copyright(c) 2019 Radek Kaczorek  <rkaczorek AT gmail DOT com>
+# Copyright(c) 2019-2024 Radek Kaczorek  <rkaczorek AT gmail DOT com>
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Library General Public
@@ -19,21 +19,13 @@
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
-import os, sys, re, signal, time, datetime, argparse, configparser
+import os, sys, psutil, re, signal, time, datetime, argparse, configparser, subprocess
 
 __author__ = 'Radek Kaczorek'
-__copyright__ = 'Copyright 2019 - 2023 Radek Kaczorek'
+__copyright__ = 'Copyright 2019 - 2024 Radek Kaczorek'
 __license__ = 'GPL-3'
-__version__ = '1.2.1'
+__version__ = '2.0'
 
-# default config file
-config_file = "/etc/virtualgps.conf"
-
-# default profile name
-profile_name = "default"
-
-# default location
-latitude, longitude, elevation = "0", "0", "0"
 
 def convert_to_sexagesimal(coord):
 	"""
@@ -64,12 +56,18 @@ def convert_to_sexagesimal(coord):
 		degrees += float(elements[2]) / 3600
 	return degrees
 
-
 def nmea_checksum(sentence):
     chsum = 0
     for s in sentence:
         chsum ^= ord(s)
     return hex(chsum)[2:]
+
+def config_init(config_file):
+	# create default config file
+	with open(config_file, "w") as cf:
+		lines = ['[default]\n', 'latitude  = 0\n', 'longitude = 0\n', 'elevation = 0\n']
+		cf.writelines(lines)
+		cf.close()
 
 def shutdown():
 	try:
@@ -82,12 +80,28 @@ def shutdown():
 def term_handler(signum, frame):
 	raise KeyboardInterrupt
 
-# register term handler
-signal.signal(signal.SIGTERM, term_handler)
+def process_status(process_name):
+    for process in psutil.process_iter(['pid', 'name']):
+        if process.info['name'] == process_name:
+            return True
+    return False
 
-if __name__ == '__main__':
-	parser = argparse.ArgumentParser(description='Emulates GPS serial device based on virtual location\n')
-	parser.add_argument('-c', '--config', type=str, help='Configuration file (default=/etc/virtualgps.conf)')
+def main():
+	# default config file
+	home_dir = os.path.expanduser("~")
+	config_file = os.path.join(home_dir, '.virtualgps')
+
+	# default profile name
+	profile_name = "default"
+
+	# default location
+	latitude, longitude, elevation = "0", "0", "0"
+
+	# register term handler
+	signal.signal(signal.SIGTERM, term_handler)
+
+	parser = argparse.ArgumentParser(description='Emulates GPS serial device using configurable virtual location\n')
+	parser.add_argument('-c', '--config', type=str, help='Configuration file (default=$HOME/.virtualgps)')
 	parser.add_argument('-p', '--profile', type=str, help='Configuration profile name (default=default)')
 	parser.add_argument('-n', '--nmea', type=str, help='NMEA log file to restream')
 	parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output (default=false)')
@@ -107,14 +121,18 @@ if __name__ == '__main__':
 	if os.path.isfile(config_file):
 		config = configparser.ConfigParser()
 		config.read(config_file)
-		if 'latitude' in config[profile_name] and 'longitude' in config[profile_name] and 'elevation' in config[profile_name]:
+		if config.sections().__len__() and 'latitude' in config[profile_name] and 'longitude' in config[profile_name] and 'elevation' in config[profile_name]:
+			print("Using configuration file", config_file)
 			latitude = convert_to_sexagesimal(config[profile_name]['latitude'])
 			longitude = convert_to_sexagesimal(config[profile_name]['longitude'])
 			elevation = float(config[profile_name]['elevation'])
 		else:
-			# if config wrong exit
-			raise KeyboardInterrupt
+			print("Error reading config file (%s)" % config_file)
+			shutdown()
+			
 	else:
+		print("Creating default configuration file", config_file)
+		config_init(config_file)
 		latitude = 0
 		longitude = 0
 		elevation = 0
@@ -133,25 +151,41 @@ if __name__ == '__main__':
 	master, slave = os.openpty()
 	pty = os.ttyname(slave)
 
-	# set permissions for gpsd
-	os.chmod(pty, 0o444)
+	# set ownership and permissions of virtual gps device file
+	os.chmod(pty, 0o644)
 
-	# on some systems apparmor allows for gpsfake only /tmp/gpsfake-*.sock
-	# we need to handle this by adding pty device to apparmor configuration
-	apparmor = "/etc/apparmor.d/usr.sbin.gpsd"
-	if os.path.isfile(apparmor):
+	if not process_status("gpsd"):
 		if args.verbose:
-			os.system("aa-complain %s" % apparmor)
+			print("Starting gpsd service...", pty)
+		gpsdService = subprocess.Popen(['gpsd', "-N", pty])
+	else:
+		if args.verbose:
+			print("Adding device to running gpsd service...")
+		# THIS REQUIRES ROOT PRIVILEDGES TO WORK
+		if os.getuid() == 0:
+			# on some systems apparmor allows for gpsfake only on /tmp/gpsfake-*.sock
+			# we need to disable apparmor complain for gpsd
+			#
+			# you need apparmor-utils to be installed on your system for this fix to work
+			aacomplain = "/usr/sbin/aa-complain"
+			apparmor = "/etc/apparmor.d/usr.sbin.gpsd"
+			if os.path.isfile(aacomplain) and os.path.isfile(apparmor):
+				if args.verbose:
+					os.system("aa-complain %s" % apparmor)
+				else:
+					os.system("aa-complain %s > /dev/null" % apparmor)
+
+			# auto add virtual gps device to gpsd (linux gps daemon)
+			try:
+				os.system("gpsdctl add %s" % pty)
+			except:
+				if args.verbose:
+					print("Error adding %s device to gpsd server", pty)
+				shutdown()
 		else:
-			os.system("aa-complain %s > /dev/null" % apparmor)
-
-	# add device to gpsd
-	try:
-		os.system("gpsdctl add %s" % pty)
-	except:
-		if args.verbose:
-			print("Error adding %s device to gpsd server", pty)
-		sys.exit()
+			print("System-wide gpsd detected. Stop gpsd daemon and rerun virtual-gps or run virtual-gps as root")
+			print("If using python virtual environment, run: sudo -E env PATH=$PATH python virtual-gps -v")
+			shutdown()
 
 	if args.nmea:
 		if args.verbose:
@@ -227,8 +261,6 @@ if __name__ == '__main__':
 
 			nmea += "$GPGSV,2,1,08,05,18,052,48,16,22,303,00,18,63,159,44,21,62,175,49*7A\n"
 			nmea += "$GPGSV,2,2,08,25,24,128,40,26,53,299,00,29,54,061,51,31,43,231,00*73"
-			#nmea += "$PGRME,38.9,M,40.2,M,55.9,M*13\n"
-			#nmea += "$GPGLL,3412.717,N,01138.281,E,133719,A*2C"
 
 			for sentence in nmea.split("\n"):
 				sentence += "\n"
@@ -239,3 +271,6 @@ if __name__ == '__main__':
 
 		except KeyboardInterrupt:
 			shutdown()
+
+if __name__ == '__init__' or __name__ == '__main__':
+	main()
