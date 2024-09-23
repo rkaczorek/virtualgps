@@ -19,7 +19,7 @@
 # the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA 02110-1301, USA.
 
-import os, sys, psutil, re, signal, time, datetime, argparse, configparser, subprocess
+import os, sys, platform, psutil, re, signal, time, datetime, argparse, configparser
 
 __author__ = 'Radek Kaczorek'
 __copyright__ = 'Copyright 2019 - 2024 Radek Kaczorek'
@@ -70,11 +70,7 @@ def config_init(config_file):
 		cf.close()
 
 def shutdown():
-	try:
-		os.close(master)
-		os.close(slave)
-	except:
-		pass
+	print("Bye")
 	sys.exit()
 
 def term_handler(signum, frame):
@@ -87,6 +83,10 @@ def process_status(process_name):
     return False
 
 def main():
+	if platform.system() != "Linux":
+		print("This script is designed for linux operating system")
+		shutdown()
+
 	# default config file
 	home_dir = os.path.expanduser("~")
 	config_file = os.path.join(home_dir, '.virtualgps')
@@ -154,13 +154,9 @@ def main():
 	# set ownership and permissions of virtual gps device file
 	os.chmod(pty, 0o644)
 
-	if not process_status("gpsd"):
+	if process_status("gpsd"):
 		if args.verbose:
-			print("Starting gpsd service...", pty)
-		gpsdService = subprocess.Popen(['gpsd', "-N", pty])
-	else:
-		if args.verbose:
-			print("Adding device to running gpsd service...")
+			print("Adding device to gpsd service...")
 		# THIS REQUIRES ROOT PRIVILEDGES TO WORK
 		if os.getuid() == 0:
 			# on some systems apparmor allows for gpsfake only on /tmp/gpsfake-*.sock
@@ -183,9 +179,23 @@ def main():
 					print("Error adding %s device to gpsd server", pty)
 				shutdown()
 		else:
-			print("System-wide gpsd detected. Stop gpsd daemon and rerun virtual-gps or run virtual-gps as root")
+			print("You need root priviledges to add virtual gps device to system-wide gpsd service.")
+			print("Run this script as root or use sudo to escalate your priviledges.")
 			print("If using python virtual environment, run: sudo -E env PATH=$PATH python virtual-gps -v")
 			shutdown()
+	else:
+		print("gpsd service is not running on this system")
+		shutdown()
+		'''
+		# run own instance of gpsd, if exists
+		if os.path.isfile("/usr/sbin/gpsd"):
+			if args.verbose:
+				print("Starting gpsd service...", pty)
+			gpsdService = subprocess.Popen(['/usr/sbin/gpsd', "-N", pty])
+		else:
+			print("gpsd is not installed on this system")
+			shutdown()
+		'''
 
 	if args.nmea:
 		if args.verbose:
