@@ -1,0 +1,4 @@
+virtualgps.py /usr/bin
+virtualgps.conf /etc
+virtualgps.service /etc/systemd/system
+
