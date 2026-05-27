@@ -19,7 +19,11 @@ sudo systemctl start virtualgps.service
 Note: Running virtualgps.py as gpsd user ensures that gpsd daemon can access /tmp/virtualgps device.
 If you run the application as any other user, make sure that access rights are set properly.
 
-Debian package with Virtual GPS is available from [www.astroberry.io](https://www.astroberry.io).
+None 2: You need gpsd, gpsd-tools, apparmor-utils installed in your system for virtualgps to work.
+You can install these packages by runnig:
+```
+sudo apt install gpsd gpsd-tools apparmor-utils
+```
 
 # How to access Virtual GPS?
 Virtual GPS device is linked to /tmp/virtualgps file (only when virtualgps.py is running)
